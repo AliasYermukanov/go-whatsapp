@@ -109,6 +109,9 @@ func (wac *Conn) sendAdminTest() (bool, error) {
 }
 
 func (wac *Conn) write(messageType int, answerMessageTag string, data []byte) (<-chan string, error) {
+	if wac == nil {
+		return nil,nil
+	}
 	var ch chan string
 	if answerMessageTag != "" {
 		ch = make(chan string, 1)
