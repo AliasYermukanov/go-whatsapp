@@ -29,55 +29,57 @@ func (wac *Conn) Send(msg interface{}) (string, error) {
 	var ch <-chan string
 	var msgProto *proto.WebMessageInfo
 
-	switch m := msg.(type) {
-	case *proto.WebMessageInfo:
-		ch, err = wac.sendProto(m)
-	case TextMessage:
-		msgProto = getTextProto(m)
-		msgInfo = getMessageInfo(msgProto)
-		ch, err = wac.sendProto(msgProto)
-	case ImageMessage:
-		m.url, m.mediaKey, m.fileEncSha256, m.fileSha256, m.fileLength, err = wac.Upload(m.Content, MediaImage)
-		if err != nil {
-			return "ERROR", fmt.Errorf("image upload failed: %v", err)
+	if wac != nil {
+		switch m := msg.(type) {
+		case *proto.WebMessageInfo:
+			ch, err = wac.sendProto(m)
+		case TextMessage:
+			msgProto = getTextProto(m)
+			msgInfo = getMessageInfo(msgProto)
+			ch, err = wac.sendProto(msgProto)
+		case ImageMessage:
+			m.url, m.mediaKey, m.fileEncSha256, m.fileSha256, m.fileLength, err = wac.Upload(m.Content, MediaImage)
+			if err != nil {
+				return "ERROR", fmt.Errorf("image upload failed: %v", err)
+			}
+			msgProto = getImageProto(m)
+			msgInfo = getMessageInfo(msgProto)
+			ch, err = wac.sendProto(msgProto)
+		case VideoMessage:
+			m.url, m.mediaKey, m.fileEncSha256, m.fileSha256, m.fileLength, err = wac.Upload(m.Content, MediaVideo)
+			if err != nil {
+				return "ERROR", fmt.Errorf("video upload failed: %v", err)
+			}
+			msgProto = getVideoProto(m)
+			msgInfo = getMessageInfo(msgProto)
+			ch, err = wac.sendProto(msgProto)
+		case DocumentMessage:
+			m.url, m.mediaKey, m.fileEncSha256, m.fileSha256, m.fileLength, err = wac.Upload(m.Content, MediaDocument)
+			if err != nil {
+				return "ERROR", fmt.Errorf("document upload failed: %v", err)
+			}
+			msgProto = getDocumentProto(m)
+			msgInfo = getMessageInfo(msgProto)
+			ch, err = wac.sendProto(msgProto)
+		case AudioMessage:
+			m.url, m.mediaKey, m.fileEncSha256, m.fileSha256, m.fileLength, err = wac.Upload(m.Content, MediaAudio)
+			if err != nil {
+				return "ERROR", fmt.Errorf("audio upload failed: %v", err)
+			}
+			msgProto = getAudioProto(m)
+			msgInfo = getMessageInfo(msgProto)
+			ch, err = wac.sendProto(msgProto)
+		case LocationMessage:
+			msgProto = GetLocationProto(m)
+			msgInfo = getMessageInfo(msgProto)
+			ch, err = wac.sendProto(msgProto)
+		case LiveLocationMessage:
+			msgProto = GetLiveLocationProto(m)
+			msgInfo = getMessageInfo(msgProto)
+			ch, err = wac.sendProto(msgProto)
+		default:
+			return "ERROR", fmt.Errorf("cannot match type %T, use message types declared in the package", msg)
 		}
-		msgProto = getImageProto(m)
-		msgInfo = getMessageInfo(msgProto)
-		ch, err = wac.sendProto(msgProto)
-	case VideoMessage:
-		m.url, m.mediaKey, m.fileEncSha256, m.fileSha256, m.fileLength, err = wac.Upload(m.Content, MediaVideo)
-		if err != nil {
-			return "ERROR", fmt.Errorf("video upload failed: %v", err)
-		}
-		msgProto = getVideoProto(m)
-		msgInfo = getMessageInfo(msgProto)
-		ch, err = wac.sendProto(msgProto)
-	case DocumentMessage:
-		m.url, m.mediaKey, m.fileEncSha256, m.fileSha256, m.fileLength, err = wac.Upload(m.Content, MediaDocument)
-		if err != nil {
-			return "ERROR", fmt.Errorf("document upload failed: %v", err)
-		}
-		msgProto = getDocumentProto(m)
-		msgInfo = getMessageInfo(msgProto)
-		ch, err = wac.sendProto(msgProto)
-	case AudioMessage:
-		m.url, m.mediaKey, m.fileEncSha256, m.fileSha256, m.fileLength, err = wac.Upload(m.Content, MediaAudio)
-		if err != nil {
-			return "ERROR", fmt.Errorf("audio upload failed: %v", err)
-		}
-		msgProto = getAudioProto(m)
-		msgInfo = getMessageInfo(msgProto)
-		ch, err = wac.sendProto(msgProto)
-	case LocationMessage:
-		msgProto = GetLocationProto(m)
-		msgInfo = getMessageInfo(msgProto)
-		ch, err = wac.sendProto(msgProto)
-	case LiveLocationMessage:
-		msgProto = GetLiveLocationProto(m)
-		msgInfo = getMessageInfo(msgProto)
-		ch, err = wac.sendProto(msgProto)
-	default:
-		return "ERROR", fmt.Errorf("cannot match type %T, use message types declared in the package", msg)
 	}
 
 	if err != nil {
