@@ -29,7 +29,7 @@ func (wac *Conn) Send(msg interface{}) (string, error) {
 	var ch <-chan string
 	var msgProto *proto.WebMessageInfo
 
-	if wac != nil {
+	if wac != nil && msg != nil {
 		switch m := msg.(type) {
 		case *proto.WebMessageInfo:
 			ch, err = wac.sendProto(m)
@@ -80,6 +80,8 @@ func (wac *Conn) Send(msg interface{}) (string, error) {
 		default:
 			return "ERROR", fmt.Errorf("cannot match type %T, use message types declared in the package", msg)
 		}
+	} else {
+		return "nil msg Erroe", fmt.Errorf("nil data", msg)
 	}
 
 	if err != nil {
