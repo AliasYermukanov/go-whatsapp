@@ -1,0 +1,71 @@
+package {{.Sname}}
+
+import (
+	"context"
+	"encoding/json"
+	kitlog "github.com/go-kit/kit/log"
+	kithttp "github.com/go-kit/kit/transport/http"
+	"github.com/gorilla/mux"
+	"net/http"
+)
+
+func MakeHandler(ss Service, logger kitlog.Logger) http.Handler {
+	opts := []kithttp.ServerOption{
+		kithttp.ServerErrorLogger(logger),
+		kithttp.ServerErrorEncoder(encodeError),
+	}
+
+	r := mux.NewRouter()
+
+	{{.Sname}}Example := kithttp.NewServer(
+		{{.Sname}}ExampleEndpoint(ss),
+		decodeExampleRequest,
+		encodeResponse,
+		opts...,
+	)
+
+	r.Handle("/v1/{{.Sname}}/example", {{.Sname}}Example).Methods("POST")
+
+	return r
+}
+func decodeExampleRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	return nil, nil
+}
+
+func encodeResponsePost(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	if e, ok := response.(errorer); ok && e.error() != nil {
+		encodeError(ctx, e.error(), w)
+		return nil
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	b, _ := json.Marshal(response)
+	var dat map[string]interface{}
+
+	_ = json.Unmarshal(b, &dat)
+	w.Header().Set("Location", dat["location"].(string))
+	w.WriteHeader(http.StatusOK)
+	return json.NewEncoder(w).Encode(response)
+}
+
+func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	if e, ok := response.(errorer); ok && e.error() != nil {
+		encodeError(ctx, e.error(), w)
+		return nil
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	return json.NewEncoder(w).Encode(response)
+}
+
+
+type errorer interface {
+	error() error
+}
+
+// encode errors from business-logic
+func encodeError(_ context.Context, err error, w http.ResponseWriter) {
+	switch err {
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(w).Encode(err)
+}

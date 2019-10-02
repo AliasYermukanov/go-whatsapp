@@ -1,0 +1,76 @@
+package config
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"os"
+)
+
+type Configs struct {
+	Elastic   ElasticConfig   `json:"elastic"`
+	Cassandra CassandraConfig `json:"cassandra"`
+	Rabbit    RabbitConfig    `json:"rabbit"`
+}
+
+type ElasticConfig struct {
+	ConnectionUrl []string `json:"connection_url"`
+}
+
+type CassandraConfig struct {
+	ConnectionIp []string `json:"connection_ip"`
+}
+
+type RabbitConfig struct {
+	Host        string `json:"host"`
+	VirtualHost string `json:"virtual_host"`
+	Port        int    `json:"port"`
+	User        string `json:"user"`
+	Password    string `json:"password"`
+	LogLevel    uint8  `json:"log_level"`
+}
+
+var AllConfigs *Configs
+
+func GetConfigs() error {
+	var filePath string
+	if os.Getenv("config") == "" {
+		pwd, err := os.Getwd()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		filePath = pwd + "/src/config/config.json"
+	} else {
+		filePath = os.Getenv("config")
+	}
+	file, err := os.Open(filePath)
+
+	if err != nil {
+		return err
+	}
+	decoder := json.NewDecoder(file)
+	var configs Configs
+	err = decoder.Decode(&configs)
+
+	if err != nil {
+		return err
+	}
+	AllConfigs = &configs
+	readEnv(AllConfigs)
+	fmt.Println(AllConfigs.Rabbit)
+	return nil
+}
+
+func Healthchecks(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "ok")
+}
+
+func readEnv(conf *Configs) {
+	if os.Getenv("AMQP_USER") != "" {
+		conf.Rabbit.User = os.Getenv("AMQP_USER")
+	}
+	if os.Getenv("AMQP_PASSWORD") != "" {
+		conf.Rabbit.Password = os.Getenv("AMQP_PASSWORD")
+	}
+}

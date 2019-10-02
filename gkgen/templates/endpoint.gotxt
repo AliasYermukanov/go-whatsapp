@@ -1,0 +1,17 @@
+package {{.Sname}}
+
+import (
+	"context"
+	"github.com/go-kit/kit/endpoint"
+)
+
+func {{.Sname}}ExampleEndpoint(s Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(interface{})
+		resp, err := s.Example(&req)
+		if err != nil {
+			return nil, err
+		}
+		return resp, nil
+	}
+}
